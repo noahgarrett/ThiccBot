@@ -65,7 +65,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
 ### Events ###
 @client.event
 async def on_ready():
-    await client.change_presence(activity=discord.Game("w/ Niggas"))
+    await client.change_presence(activity=discord.Game("w/ My pp"))
     print("Bot is online.")
 
 @client.event
@@ -75,6 +75,11 @@ async def on_member_join(member):
 @client.event
 async def on_member_remove(member):
     print(f'{member} has left a server.')
+
+@client.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(f'Please use .help for the correct arguements')
 
 ### Normal Commands ###
 @client.command(name='ping', help='Shows the latency of the bot')
@@ -183,6 +188,8 @@ async def remove(ctx, number):
         await ctx.send('Your queue is either **empty** or the index is **out of range**')
 
 ## Economy ##
+
+    ## / Helper Functions ##
 async def get_bank_data():
         with open("mainbank.json", "r") as f:
             users = json.load(f)
@@ -200,7 +207,9 @@ async def open_account(user):
     with open("mainbank.json", "w") as f:
         json.dump(users, f)
     return True
+    ## Helper Functions / ##
 
+    ## / Bank Commands ##
 @client.command(name="balance", help="Checks your account balance")
 async def balance(ctx):
     await open_account(ctx.author)
@@ -213,6 +222,38 @@ async def balance(ctx):
     em = discord.Embed(title=f"{ctx.author.name}'s Bank Account", color=discord.Color.red())
     em.add_field(name="Balance", value=f'${bank_amt}')
     await ctx.send(embed=em)
+    ## Bank Commands / ##
+
+    ## / Shop Commands ##
+shop_role = 5000
+shop_voice_channel = 10000
+@client.command(name="shop", help="View the shop list")
+async def shop(ctx):
+    user = ctx.author
+    server = ctx.guild.name
+
+    em = discord.Embed(title=f"{server}'s Shop", color=discord.Color.blue())
+    em.add_field(name="Personal Role", value=f"${shop_role}\n*.buy role*",)
+    em.add_field(name="Personal Voice Channel", value=f"${shop_voice_channel}\n*.buy voicechannel*")
+    await ctx.send(embed=em)
+
+@client.command(name="buy", help="Used to buy an item from .shop")
+async def buy(ctx, item):
+    users = await get_bank_data()
+    user = ctx.author
+    bank_amt = users[str(user.id)]["bank"]
+    role_cost = 5000
+
+    if item == "role" and bank_amt >= role_cost:
+        bank_amt -= role_cost
+        ## INSERT CODE HERE TO CREATE DISCORD ROLE AND ADD TO USER
+        with open("mainbank.json", "w") as f:
+            json.dump(users, f)
+        await ctx.send(f'You have successfully bought a new role. Your new balance is ${bank_amt}')
+    else:
+        await ctx.send("You do not have enough money for this purchase")
+
+    ## Shop Commands / ##
 
 ### Tasks ###
 
