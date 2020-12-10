@@ -14,9 +14,11 @@ os.chdir(noah_path)
 client = commands.Bot(command_prefix = '.')
 token = 'NzU1NDQ5NjQ0NzIwMzI0NjQw.X2DdTg.ilG6fU6a_TU1jmlsmFbfX5N-fBg'
 
-music_queue = []
+## Cog Commands ##
+
 
 ### Music Setup ###
+music_queue = []
 youtube_dl.utils.bug_reports_message = lambda: ''
 
 ytdl_format_options = {
@@ -182,24 +184,24 @@ async def remove(ctx, number):
 
 ## Economy ##
 async def get_bank_data():
-    with open("mainbank.json", "r") as f:
-        users = json.load(f)
-    return users
+        with open("mainbank.json", "r") as f:
+            users = json.load(f)
+        return users
 
 async def open_account(user):
     users = await get_bank_data()
 
     if str(user.id) in users:
-        return False
+            return False
     else:
         users[str(user.id)] = {}
         users[str(user.id)]["bank"] = 1000
-        
+
     with open("mainbank.json", "w") as f:
         json.dump(users, f)
     return True
 
-@client.command(name= "balance", help="Checks your account balance")
+@client.command(name="balance", help="Checks your account balance")
 async def balance(ctx):
     await open_account(ctx.author)
 
@@ -208,9 +210,9 @@ async def balance(ctx):
 
     bank_amt = users[str(user.id)]["bank"]
 
-    em = discord.Embed(title=f"{ctx.author.name}'s Bank Account", color= discord.Color.red())
-    em.add_field(name= "Balance", value= f'${bank_amt}')
-    await ctx.send(embed= em)
+    em = discord.Embed(title=f"{ctx.author.name}'s Bank Account", color=discord.Color.red())
+    em.add_field(name="Balance", value=f'${bank_amt}')
+    await ctx.send(embed=em)
 
 ### Tasks ###
 
