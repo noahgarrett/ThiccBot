@@ -4,6 +4,12 @@ from discord.utils import get
 import asyncio
 import youtube_dl
 from random import choice
+import os, json
+
+noah_path = "C:\\Users\\noahw\\Desktop\\Coding\\Github Projects\\ThiccBot\\venv"
+cody_path = ""
+
+os.chdir(noah_path)
 
 client = commands.Bot(command_prefix = '.')
 token = 'NzU1NDQ5NjQ0NzIwMzI0NjQw.X2DdTg.ilG6fU6a_TU1jmlsmFbfX5N-fBg'
@@ -174,6 +180,37 @@ async def remove(ctx, number):
     except:
         await ctx.send('Your queue is either **empty** or the index is **out of range**')
 
+## Economy ##
+async def get_bank_data():
+    with open("mainbank.json", "r") as f:
+        users = json.load(f)
+    return users
+
+async def open_account(user):
+    users = await get_bank_data()
+
+    if str(user.id) in users:
+        return False
+    else:
+        users[str(user.id)] = {}
+        users[str(user.id)]["bank"] = 1000
+        
+    with open("mainbank.json", "w") as f:
+        json.dump(users, f)
+    return True
+
+@client.command(name= "balance", help="Checks your account balance")
+async def balance(ctx):
+    await open_account(ctx.author)
+
+    user = ctx.author
+    users = await get_bank_data()
+
+    bank_amt = users[str(user.id)]["bank"]
+
+    em = discord.Embed(title=f"{ctx.author.name}'s Bank Account", color= discord.Color.red())
+    em.add_field(name= "Balance", value= f'${bank_amt}')
+    await ctx.send(embed= em)
 
 ### Tasks ###
 
