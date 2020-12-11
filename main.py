@@ -67,6 +67,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
 async def on_ready():
     await client.change_presence(activity=discord.Game("w/ My pp"))
     print("Bot is online.")
+    print(discord.__version__)
 
 @client.event
 async def on_member_join(member):
@@ -115,8 +116,15 @@ async def geton(ctx, member: discord.Member, *, reason=None):
     #await client.user.edit(username=name)
 
 #@client.command()
-#async def imposters(ctx, role: discord.Role = None):
-    #await ctx.user.add_roles(member, role)
+#async def null(ctx):
+    #user = ctx.author
+    #role = discord.utils.get(ctx.guild.roles, name="Bots")
+    #await discord.Member.add_roles(user, role)
+
+#@client.command()
+#async def null(ctx):
+    #guild = ctx.guild
+    #await guild.create_role(name='N-Word Pass', color=discord.Color.from_rgb(248, 24, 148), permissions=discord.Permissions(permissions=0x00000008))
 
 ### Music Commands ###
 @client.command(name='leave', help='Allows bot to leave the voice channel')
@@ -205,7 +213,7 @@ async def open_account(user):
         users[str(user.id)]["bank"] = 1000
 
     with open("mainbank.json", "w") as f:
-        json.dump(users, f)
+        json.dump(users, f, indent=4)
     return True
     ## Helper Functions / ##
 
@@ -219,13 +227,16 @@ async def balance(ctx):
 
     bank_amt = users[str(user.id)]["bank"]
 
-    em = discord.Embed(title=f"{ctx.author.name}'s Bank Account", color=discord.Color.red())
+    em = discord.Embed(
+        title=f"{ctx.author.name}'s Account",
+        description= f"{ctx.guild.name}'s Bank",
+        color=discord.Color.red())
     em.add_field(name="Balance", value=f'${bank_amt}')
     await ctx.send(embed=em)
     ## Bank Commands / ##
 
     ## / Shop Commands ##
-shop_role = 5000
+shop_role = 25000
 shop_voice_channel = 10000
 @client.command(name="shop", help="View the shop list")
 async def shop(ctx):
@@ -233,7 +244,7 @@ async def shop(ctx):
     server = ctx.guild.name
 
     em = discord.Embed(title=f"{server}'s Shop", color=discord.Color.blue())
-    em.add_field(name="Personal Role", value=f"${shop_role}\n*.buy role*",)
+    em.add_field(name="N Word Pass", value=f"${shop_role}\n*.buy pass*",)
     em.add_field(name="Personal Voice Channel", value=f"${shop_voice_channel}\n*.buy voicechannel*")
     await ctx.send(embed=em)
 
@@ -242,19 +253,26 @@ async def buy(ctx, item):
     users = await get_bank_data()
     user = ctx.author
     bank_amt = users[str(user.id)]["bank"]
-    role_cost = 5000
+    role_cost = 25000
+    voice_channel_cost = 10000
 
-    if item == "role" and bank_amt >= role_cost:
-        bank_amt -= role_cost
-        ## INSERT CODE HERE TO CREATE DISCORD ROLE AND ADD TO USER
-        with open("mainbank.json", "w") as f:
-            json.dump(users, f)
-        await ctx.send(f'You have successfully bought a new role. Your new balance is ${bank_amt}')
+    if item == "pass" and bank_amt >= role_cost:
+        new_balance = bank_amt - role_cost
+        role = discord.utils.get(ctx.guild.roles, name="N-Word Pass")
+        await discord.Member.add_roles(user, role)
+        # Updates user balance
+        with open('mainbank.json', 'r') as f:
+            data = json.load(f)
+        data[str(user.id)]["bank"] = new_balance
+        with open('mainbank.json', 'w') as y:
+            json.dump(data, y, indent=4)
+        await ctx.send(f'You have successfully bought the **N-Word Pass**. Your new balance is ${new_balance}')
+    elif item == "voicechannel":
+        await ctx.send(f'This functionality has not been set up yet. Your balance remains at ${bank_amt}')
     else:
         await ctx.send("You do not have enough money for this purchase")
 
     ## Shop Commands / ##
-
 ### Tasks ###
 
 
