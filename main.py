@@ -4,7 +4,7 @@ from discord.utils import get
 import asyncio
 import youtube_dl
 from random import choice
-import os, json
+import os, json, random
 
 noah_path = "C:\\Users\\noahw\\Desktop\\Coding\\Github Projects\\ThiccBot\\venv"
 cody_path = ""
@@ -273,6 +273,44 @@ async def buy(ctx, item):
         await ctx.send("You do not have enough money for this purchase")
 
     ## Shop Commands / ##
+
+    ## / Gambling System ##
+@client.command(name="coinflip", help=".coinflip (heads or tails) (bet amount)")
+async def coinflip(ctx, pick, bet_amt):
+    bot_pick = random.randint(1, 2)
+
+    if pick == 'heads' or pick == 'Heads' or pick == 'h' or pick == 'H':
+        user_pick = 1
+        if user_pick == bot_pick:
+            await bet_win(ctx.author, bet_amt)
+            await ctx.send(f'The coin chose **Heads**! You have doubled your bet of ${bet_amt}')
+        else:
+            await ctx.send(f'The coin chose **Tails**! You have sadly lost your bet of ${bet_amt}')
+    elif pick == 'tails' or pick == 'Tails' or pick == 't' or pick == 'T':
+        user_pick = 2
+        if user_pick == bot_pick:
+            await bet_win(ctx.author, bet_amt)
+            await ctx.send(f'The coin chose **Tails**! You have doubled your bet of ${bet_amt}')
+        else:
+            await ctx.send(f'The coin chose **Heads**! You have sadly lost your bet of ${bet_amt}')
+    else:
+        await ctx.send('Please enter Heads or Tails')
+
+async def bet_win(user, bet_amt):
+    users = await get_bank_data()
+    bank_amt = users[str(user.id)]["bank"]
+    bet_double = bet_amt * 2
+    winnings = bank_amt + bet_double
+    print(winnings)
+
+    with open('mainbank.json', 'r') as f:
+        data = json.load(f)
+    data[str(user.id)]["bank"] = winnings
+    with open('mainbank.json', 'w') as y:
+        json.dump(data, y, indent=4)
+    return True
+
+    ## Gambling System / ##
 ### Tasks ###
 
 
