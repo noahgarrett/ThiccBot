@@ -67,7 +67,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
 async def on_ready():
     await client.change_presence(activity=discord.Game("w/ My pp"))
     print("Bot is online.")
-    print(discord.__version__)
+    print(f'Discord.PY Version: {discord.__version__}')
 
 @client.event
 async def on_member_join(member):
