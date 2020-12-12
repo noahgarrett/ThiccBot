@@ -210,7 +210,7 @@ async def open_account(user):
             return False
     else:
         users[str(user.id)] = {}
-        users[str(user.id)]["bank"] = 1000
+        users[str(user.id)]["bank"] = 100
 
     with open("mainbank.json", "w") as f:
         json.dump(users, f, indent=4)
@@ -278,28 +278,35 @@ async def buy(ctx, item):
 @client.command(name="coinflip", help=".coinflip (heads or tails) (bet amount)")
 async def coinflip(ctx, pick, bet_amt):
     bot_pick = random.randint(1, 2)
-
-    if pick == 'heads' or pick == 'Heads' or pick == 'h' or pick == 'H':
-        user_pick = 1
-        if user_pick == bot_pick:
-            await bet_win(ctx.author, bet_amt)
-            await ctx.send(f'The coin chose **Heads**! You have doubled your bet of ${bet_amt}')
+    users = await get_bank_data()
+    user = ctx.author
+    bank_amt = users[str(user.id)]["bank"]
+    if int(bet_amt) <= bank_amt:
+        if pick == 'heads' or pick == 'Heads' or pick == 'h' or pick == 'H':
+            user_pick = 1
+            if user_pick == bot_pick:
+                await bet_win(ctx.author, bet_amt)
+                await ctx.send(f'The coin chose **Heads**! You have doubled your bet of ${bet_amt}')
+            else:
+                await bet_lose(ctx.author, bet_amt)
+                await ctx.send(f'The coin chose **Tails**! You have sadly lost your bet of ${bet_amt}')
+        elif pick == 'tails' or pick == 'Tails' or pick == 't' or pick == 'T':
+            user_pick = 2
+            if user_pick == bot_pick:
+                await bet_win(ctx.author, bet_amt)
+                await ctx.send(f'The coin chose **Tails**! You have doubled your bet of ${bet_amt}')
+            else:
+                await bet_lose(ctx.author, bet_amt)
+                await ctx.send(f'The coin chose **Heads**! You have sadly lost your bet of ${bet_amt}')
         else:
-            await ctx.send(f'The coin chose **Tails**! You have sadly lost your bet of ${bet_amt}')
-    elif pick == 'tails' or pick == 'Tails' or pick == 't' or pick == 'T':
-        user_pick = 2
-        if user_pick == bot_pick:
-            await bet_win(ctx.author, bet_amt)
-            await ctx.send(f'The coin chose **Tails**! You have doubled your bet of ${bet_amt}')
-        else:
-            await ctx.send(f'The coin chose **Heads**! You have sadly lost your bet of ${bet_amt}')
+            await ctx.send('Please enter Heads or Tails')
     else:
-        await ctx.send('Please enter Heads or Tails')
-
+        await ctx.send(f"You do not have enough funds for this bet. Your current balance is **${bank_amt}**")
+        # / Helper Functions #
 async def bet_win(user, bet_amt):
     users = await get_bank_data()
     bank_amt = users[str(user.id)]["bank"]
-    bet_double = bet_amt * 2
+    bet_double = int(bet_amt) * 2
     winnings = bank_amt + bet_double
     print(winnings)
 
@@ -310,6 +317,18 @@ async def bet_win(user, bet_amt):
         json.dump(data, y, indent=4)
     return True
 
+async def bet_lose(user, bet_amt):
+    users = await get_bank_data()
+    bank_amt = users[str(user.id)]["bank"]
+    winnings = bank_amt - int(bet_amt)
+
+    with open('mainbank.json', 'r') as f:
+        data = json.load(f)
+    data[str(user.id)]["bank"] = winnings
+    with open('mainbank.json', 'w') as y:
+        json.dump(data, y, indent=4)
+    return True
+        # Helper Functions / #
     ## Gambling System / ##
 ### Tasks ###
 
