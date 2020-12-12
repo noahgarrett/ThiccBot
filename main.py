@@ -423,11 +423,33 @@ async def get_name(symbol):
     stock_name = stocks[symbol]["name"]
     return stock_name
 
+async def get_logo(symbol):
+    stocks = await get_stock_json()
+    stock_logo = stocks[symbol]["logo"]
+    return stock_logo
+
 @client.command(name='price', help='Displays the current market price: .price (market symbol)')
 async def price(ctx, symbol):
     price = await get_price(symbol)
     stock_name = await get_name(symbol)
-    await ctx.send(f'{symbol} ({stock_name}): **${price}**')
+    stock_logo = await get_logo(symbol)
+
+    em = discord.Embed(title=f"{symbol}", description=f"{stock_name}", color=discord.Color.green())
+    em.add_field(name="Current Market Price", value=f"${price}")
+    em.set_thumbnail(url=stock_logo)
+    await ctx.send(embed=em)
+    #await ctx.send(f'{symbol} ({stock_name}): **${price}**')
+
+@client.command(name="stocklist", help="Displays current market symbols compatible with .price")
+async def stocklist(ctx):
+    stocks = await get_stock_json()
+    stock_list = []
+    for key in stocks:
+        stock_list.append(key)
+
+    em = discord.Embed(title="Stock List", description="Stocks currently compatible to look up", color=discord.Color.dark_magenta())
+    em.add_field(name=stock_list, value="symbols")
+    await ctx.send(embed=em)
     ## Stock System / ##
 ### Tasks ###
 

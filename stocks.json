@@ -1,14 +1,27 @@
 {
   "AAPL": {
       "name": "Apple Inc.",
+      "logo": "https://media.idownloadblog.com/wp-content/uploads/2018/07/Apple-logo-black-and-white.png",
       "link": "https://finance.yahoo.com/quote/AAPL?p=AAPL&.tsrc=fin-srch"
   },
   "AMZN": {
       "name": "Amazon.com Inc.",
+      "logo": "https://www.marketplace.org/wp-content/uploads/2019/07/ama2.png?resize=740%2C204",
       "link": "https://finance.yahoo.com/quote/AMZN?p=AMZN&.tsrc=fin-srch"
   },
   "FB": {
       "name": "Facebook, Inc.",
+      "logo": "https://i.pinimg.com/originals/b3/26/b5/b326b5f8d23cd1e0f18df4c9265416f7.png",
       "link": "https://finance.yahoo.com/quote/FB?p=FB"
+  },
+  "TSLA": {
+      "name": "Tesla, Inc.",
+      "logo": "https://i.pinimg.com/originals/f5/5e/95/f55e95f5677d2cb3bea922599667b6db.jpg",
+      "link": "https://finance.yahoo.com/quote/TSLA?p=TSLA"
+  },
+  "GOOG": {
+      "name": "Alphabet Inc. (Google)",
+      "logo": "https://blog.hubspot.com/hubfs/image8-2.jpg",
+      "link": "https://finance.yahoo.com/quote/GOOG?p=GOOG"
   }
 }
