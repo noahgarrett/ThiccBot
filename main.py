@@ -5,6 +5,8 @@ import asyncio
 import youtube_dl
 from random import choice
 import os, json, random
+import requests
+from bs4 import BeautifulSoup
 
 noah_path = "C:\\Users\\noahw\\Desktop\\Coding\\Github Projects\\ThiccBot\\venv"
 cody_path = ""
@@ -80,7 +82,7 @@ async def on_member_remove(member):
 @client.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(f'Please use .help for the correct arguements')
+        await ctx.send(f'Please use .help for the correct arguments')
 
 ### Normal Commands ###
 @client.command(name='ping', help='Shows the latency of the bot')
@@ -236,6 +238,14 @@ async def balance(ctx):
     ## Bank Commands / ##
 
     ## / Shop Commands ##
+@client.command(name='deletechannel', help='Deletes a channel')
+async def deletechannel(ctx, channel_name):
+    existing_channel = discord.utils.get(guild.channels, name=channel_name)
+    if existing_channel is not None:
+        await existing_channel.delete()
+    else:
+        await ctx.send(f'No channel named, "{channel_name}", was found.')
+
 shop_role = 25000
 shop_voice_channel = 10000
 @client.command(name="shop", help="View the shop list")
@@ -259,16 +269,52 @@ async def buy(ctx, item):
     if item == "pass" and bank_amt >= role_cost:
         new_balance = bank_amt - role_cost
         role = discord.utils.get(ctx.guild.roles, name="N-Word Pass")
-        await discord.Member.add_roles(user, role)
-        # Updates user balance
-        with open('mainbank.json', 'r') as f:
-            data = json.load(f)
-        data[str(user.id)]["bank"] = new_balance
-        with open('mainbank.json', 'w') as y:
-            json.dump(data, y, indent=4)
-        await ctx.send(f'You have successfully bought the **N-Word Pass**. Your new balance is ${new_balance}')
-    elif item == "voicechannel":
-        await ctx.send(f'This functionality has not been set up yet. Your balance remains at ${bank_amt}')
+        if role in ctx.author.roles:
+            pass_refund = bank_amt + role_cost
+            # Updates user balance
+            with open('mainbank.json', 'r') as f:
+                data = json.load(f)
+            data[str(user.id)]["bank"] = pass_refund
+            with open('mainbank.json', 'w') as y:
+                json.dump(data, y, indent=4)
+            await ctx.author.remove_roles(role)
+            await ctx.send(f"Your previous purchase of the role: **{role}** has been refunded. Your new balance is **${pass_refund}**")
+        else:
+            await discord.Member.add_roles(user, role)
+            # Updates user balance
+            with open('mainbank.json', 'r') as f:
+                data = json.load(f)
+            data[str(user.id)]["bank"] = new_balance
+            with open('mainbank.json', 'w') as y:
+                json.dump(data, y, indent=4)
+            await ctx.send(f'You have successfully bought the **N-Word Pass**. Your new balance is ${new_balance}')
+    elif item == "voicechannel" and bank_amt >= voice_channel_cost:
+        guild = ctx.message.guild
+        channel_name = f"{user.name}'s Office"
+        existing_channel = discord.utils.get(guild.channels, name=channel_name)
+        balance = bank_amt - voice_channel_cost
+        if existing_channel == None:
+            # Updates user balance
+            with open('mainbank.json', 'r') as f:
+                data = json.load(f)
+            data[str(user.id)]["bank"] = balance
+            with open('mainbank.json', 'w') as y:
+                json.dump(data, y, indent=4)
+            await guild.create_voice_channel(channel_name)
+            await ctx.send(f"You are now the proud owner of **{user.name}'s Office**. Your new balance is **${balance}**")
+        else:
+            if existing_channel is not None:
+                newer_balance = bank_amt + voice_channel_cost
+                # Updates user balance
+                with open('mainbank.json', 'r') as f:
+                    data = json.load(f)
+                data[str(user.id)]["bank"] = newer_balance
+                with open('mainbank.json', 'w') as y:
+                    json.dump(data, y, indent=4)
+                await existing_channel.delete()
+                await ctx.send(f"Your previous channel named **{user.name}'s Office** has been deleted. You have been refunded **${voice_channel_cost}**. Your new balance is **${newer_balance}**")
+            #else:
+                #await ctx.send(f'No channel named, "{channel_name}", was found.')
     else:
         await ctx.send("You do not have enough money for this purchase")
 
@@ -311,18 +357,19 @@ async def dice(ctx, pick, bet_amt):
     bank_amt = users[str(user.id)]["bank"]
     if int(bet_amt) <= bank_amt:
         if pick == "over" or pick == "Over" or pick == "o" or pick == "O":
-            user_pick = 1
-            if user_pick >= bot_pick:
+            if bot_pick >= 50:
                 await bet_win(ctx.author, bet_amt)
                 await ctx.send(f"The magical dice rolled a **{bot_pick}**! You have doubled your bet of **${bet_amt}**")
             else:
                 await bet_lose(ctx.author, bet_amt)
                 await ctx.send(f"The not so magical dice rolled a **{bot_pick}**... You have sadly lost your bet of **${bet_amt}**.")
         elif pick == "under" or pick == "Under" or pick == "u" or pick == "U":
-            user_pick = 2
-            if user_pick <= bot_pick:
+            if bot_pick <= 50:
                 await bet_win(ctx.author, bet_amt)
                 await ctx.send(f"The magical dice rolled a **{bot_pick}**! You have doubled your bet of **${bet_amt}**")
+            else:
+                await bet_lose(ctx.author, bet_amt)
+                await ctx.send(f"The not so magical dice rolled a **{bot_pick}**... You have sadly lost your bet of **${bet_amt}**.")
         else:
             await ctx.send("Please ender Over or Under")
     else:
@@ -354,6 +401,34 @@ async def bet_lose(user, bet_amt):
     return True
         # Helper Functions / #
     ## Gambling System / ##
+
+    ## / Stock System ##
+async def get_stock_json():
+    with open("stocks.json", "r") as f:
+        stocks = json.load(f)
+    return stocks
+
+async def get_price(symbol):
+    stocks = await get_stock_json()
+    stock_link = stocks[symbol]["link"]
+
+    response = requests.get(stock_link)
+    soup = BeautifulSoup(response.text, 'lxml')
+    price = soup.find_all('div', {'class': 'My(6px) Pos(r) smartphone_Mt(6px)'})[0].find('span').text
+    #print(price)
+    return price
+
+async def get_name(symbol):
+    stocks = await get_stock_json()
+    stock_name = stocks[symbol]["name"]
+    return stock_name
+
+@client.command(name='price', help='Displays the current market price: .price (market symbol)')
+async def price(ctx, symbol):
+    price = await get_price(symbol)
+    stock_name = await get_name(symbol)
+    await ctx.send(f'{symbol} ({stock_name}): **${price}**')
+    ## Stock System / ##
 ### Tasks ###
 
 

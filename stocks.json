@@ -1,0 +1,14 @@
+{
+  "AAPL": {
+      "name": "Apple Inc.",
+      "link": "https://finance.yahoo.com/quote/AAPL?p=AAPL&.tsrc=fin-srch"
+  },
+  "AMZN": {
+      "name": "Amazon.com Inc.",
+      "link": "https://finance.yahoo.com/quote/AMZN?p=AMZN&.tsrc=fin-srch"
+  },
+  "FB": {
+      "name": "Facebook, Inc.",
+      "link": "https://finance.yahoo.com/quote/FB?p=FB"
+  }
+}
