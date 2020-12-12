@@ -302,13 +302,37 @@ async def coinflip(ctx, pick, bet_amt):
             await ctx.send('Please enter Heads or Tails')
     else:
         await ctx.send(f"You do not have enough funds for this bet. Your current balance is **${bank_amt}**")
+
+@client.command(name="dice", help=".dice (over/under 50) (bet amount)")
+async def dice(ctx, pick, bet_amt):
+    bot_pick = random.randint(0, 100)
+    users = await get_bank_data()
+    user = ctx.author
+    bank_amt = users[str(user.id)]["bank"]
+    if int(bet_amt) <= bank_amt:
+        if pick == "over" or pick == "Over" or pick == "o" or pick == "O":
+            user_pick = 1
+            if user_pick >= bot_pick:
+                await bet_win(ctx.author, bet_amt)
+                await ctx.send(f"The magical dice rolled a **{bot_pick}**! You have doubled your bet of **${bet_amt}**")
+            else:
+                await bet_lose(ctx.author, bet_amt)
+                await ctx.send(f"The not so magical dice rolled a **{bot_pick}**... You have sadly lost your bet of **${bet_amt}**.")
+        elif pick == "under" or pick == "Under" or pick == "u" or pick == "U":
+            user_pick = 2
+            if user_pick <= bot_pick:
+                await bet_win(ctx.author, bet_amt)
+                await ctx.send(f"The magical dice rolled a **{bot_pick}**! You have doubled your bet of **${bet_amt}**")
+        else:
+            await ctx.send("Please ender Over or Under")
+    else:
+        await ctx.send(f"You do not have enough funds for this bet. Your current balance is **${bank_amt}**")
         # / Helper Functions #
 async def bet_win(user, bet_amt):
     users = await get_bank_data()
     bank_amt = users[str(user.id)]["bank"]
     bet_double = int(bet_amt) * 2
     winnings = bank_amt + bet_double
-    print(winnings)
 
     with open('mainbank.json', 'r') as f:
         data = json.load(f)
