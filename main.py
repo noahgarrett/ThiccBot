@@ -17,8 +17,32 @@ client = commands.Bot(command_prefix = '.')
 token = 'NzU1NDQ5NjQ0NzIwMzI0NjQw.X2DdTg.ilG6fU6a_TU1jmlsmFbfX5N-fBg'
 
 ## Cog Commands ##
+@client.command()
+async def load(ctx, extension):
+    client.load_extension(f'cogs.{extension}')
 
+@client.command()
+async def unload(ctx, extension):
+    client.unload_extension(f'cogs.{extension}')
 
+def get_global_json():
+    with open('global.json', 'r') as f:
+        data = json.load(f)
+    return data
+
+def reset_global_json():
+    data = get_global_json()
+    reset_value = "false"
+    data['global'] = reset_value
+    with open('global.json', 'w') as y:
+        json.dump(data, y, indent=4)
+
+data = get_global_json()
+global_value = data['global']
+for filename in os.listdir('./cogs'):
+    if filename.endswith('.py'):
+        client.load_extension(f'cogs.{filename[:-3]}')
+        print(filename[:-3])
 ### Music Setup ###
 music_queue = []
 youtube_dl.utils.bug_reports_message = lambda: ''
@@ -63,26 +87,6 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
         filename = data['url'] if stream else ytdl.prepare_filename(data)
         return cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options), data=data)
-
-### Events ###
-@client.event
-async def on_ready():
-    await client.change_presence(activity=discord.Game("w/ My pp"))
-    print("Bot is online.")
-    print(f'Discord.PY Version: {discord.__version__}')
-
-@client.event
-async def on_member_join(member):
-    print(f'{member} has joined a server.')
-
-@client.event
-async def on_member_remove(member):
-    print(f'{member} has left a server.')
-
-@client.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(f'Please use .help for the correct arguments')
 
 ### Normal Commands ###
 @client.command(name='ping', help='Shows the latency of the bot')
@@ -321,59 +325,9 @@ async def buy(ctx, item):
     ## Shop Commands / ##
 
     ## / Gambling System ##
-@client.command(name="coinflip", help=".coinflip (heads or tails) (bet amount)")
-async def coinflip(ctx, pick, bet_amt):
-    bot_pick = random.randint(1, 2)
-    users = await get_bank_data()
-    user = ctx.author
-    bank_amt = users[str(user.id)]["bank"]
-    if int(bet_amt) <= bank_amt:
-        if pick == 'heads' or pick == 'Heads' or pick == 'h' or pick == 'H':
-            user_pick = 1
-            if user_pick == bot_pick:
-                await bet_win(ctx.author, bet_amt)
-                await ctx.send(f'The coin chose **Heads**! You have doubled your bet of ${bet_amt}')
-            else:
-                await bet_lose(ctx.author, bet_amt)
-                await ctx.send(f'The coin chose **Tails**! You have sadly lost your bet of ${bet_amt}')
-        elif pick == 'tails' or pick == 'Tails' or pick == 't' or pick == 'T':
-            user_pick = 2
-            if user_pick == bot_pick:
-                await bet_win(ctx.author, bet_amt)
-                await ctx.send(f'The coin chose **Tails**! You have doubled your bet of ${bet_amt}')
-            else:
-                await bet_lose(ctx.author, bet_amt)
-                await ctx.send(f'The coin chose **Heads**! You have sadly lost your bet of ${bet_amt}')
-        else:
-            await ctx.send('Please enter Heads or Tails')
-    else:
-        await ctx.send(f"You do not have enough funds for this bet. Your current balance is **${bank_amt}**")
 
-@client.command(name="dice", help=".dice (over/under 50) (bet amount)")
-async def dice(ctx, pick, bet_amt):
-    bot_pick = random.randint(0, 100)
-    users = await get_bank_data()
-    user = ctx.author
-    bank_amt = users[str(user.id)]["bank"]
-    if int(bet_amt) <= bank_amt:
-        if pick == "over" or pick == "Over" or pick == "o" or pick == "O":
-            if bot_pick >= 50:
-                await bet_win(ctx.author, bet_amt)
-                await ctx.send(f"The magical dice rolled a **{bot_pick}**! You have doubled your bet of **${bet_amt}**")
-            else:
-                await bet_lose(ctx.author, bet_amt)
-                await ctx.send(f"The not so magical dice rolled a **{bot_pick}**... You have sadly lost your bet of **${bet_amt}**.")
-        elif pick == "under" or pick == "Under" or pick == "u" or pick == "U":
-            if bot_pick <= 50:
-                await bet_win(ctx.author, bet_amt)
-                await ctx.send(f"The magical dice rolled a **{bot_pick}**! You have doubled your bet of **${bet_amt}**")
-            else:
-                await bet_lose(ctx.author, bet_amt)
-                await ctx.send(f"The not so magical dice rolled a **{bot_pick}**... You have sadly lost your bet of **${bet_amt}**.")
-        else:
-            await ctx.send("Please ender Over or Under")
-    else:
-        await ctx.send(f"You do not have enough funds for this bet. Your current balance is **${bank_amt}**")
+
+
         # / Helper Functions #
 async def bet_win(user, bet_amt):
     users = await get_bank_data()
