@@ -25,20 +25,6 @@ async def load(ctx, extension):
 async def unload(ctx, extension):
     client.unload_extension(f'cogs.{extension}')
 
-def get_global_json():
-    with open('global.json', 'r') as f:
-        data = json.load(f)
-    return data
-
-def reset_global_json():
-    data = get_global_json()
-    reset_value = "false"
-    data['global'] = reset_value
-    with open('global.json', 'w') as y:
-        json.dump(data, y, indent=4)
-
-data = get_global_json()
-global_value = data['global']
 for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
         client.load_extension(f'cogs.{filename[:-3]}')
@@ -131,6 +117,76 @@ async def geton(ctx, member: discord.Member, *, reason=None):
 #async def null(ctx):
     #guild = ctx.guild
     #await guild.create_role(name='N-Word Pass', color=discord.Color.from_rgb(248, 24, 148), permissions=discord.Permissions(permissions=0x00000008))
+### Helper Functions ###
+async def get_bank_data():
+    with open("mainbank.json", "r") as f:
+        users = json.load(f)
+    return users
+
+
+async def open_account(user):
+    users = await get_bank_data()
+
+    if str(user.id) in users:
+        return False
+    else:
+        users[str(user.id)] = {}
+        users[str(user.id)]["bank"] = 100
+
+    with open("mainbank.json", "w") as f:
+        json.dump(users, f, indent=4)
+    return True
+
+async def bet_win(user, bet_amt):
+    users = await get_bank_data()
+    bank_amt = users[str(user.id)]["bank"]
+    bet_double = int(bet_amt) * 2
+    winnings = bank_amt + bet_double
+
+    with open('mainbank.json', 'r') as f:
+        data = json.load(f)
+    data[str(user.id)]["bank"] = winnings
+    with open('mainbank.json', 'w') as y:
+        json.dump(data, y, indent=4)
+    return True
+
+async def bet_lose(user, bet_amt):
+    users = await get_bank_data()
+    bank_amt = users[str(user.id)]["bank"]
+    winnings = bank_amt - int(bet_amt)
+
+    with open('mainbank.json', 'r') as f:
+        data = json.load(f)
+    data[str(user.id)]["bank"] = winnings
+    with open('mainbank.json', 'w') as y:
+        json.dump(data, y, indent=4)
+    return True
+
+async def get_stock_json():
+    with open("stocks.json", "r") as f:
+        stocks = json.load(f)
+    return stocks
+
+async def get_price(symbol):
+    stocks = await get_stock_json()
+    stock_link = stocks[symbol]["link"]
+
+    response = requests.get(stock_link)
+    soup = BeautifulSoup(response.text, 'lxml')
+    price = soup.find_all('div', {'class': 'My(6px) Pos(r) smartphone_Mt(6px)'})[0].find('span').text
+    #print(price)
+    return price
+
+async def get_name(symbol):
+    stocks = await get_stock_json()
+    stock_name = stocks[symbol]["name"]
+    return stock_name
+
+async def get_logo(symbol):
+    stocks = await get_stock_json()
+    stock_logo = stocks[symbol]["logo"]
+    return stock_logo
+### Helper Functions
 
 ### Music Commands ###
 @client.command(name='leave', help='Allows bot to leave the voice channel')
@@ -200,67 +256,22 @@ async def remove(ctx, number):
         await ctx.send(f'Your queue is now `{music_queue}`')
     except:
         await ctx.send('Your queue is either **empty** or the index is **out of range**')
+## Music Commands ##
 
-## Economy ##
-
-    ## / Helper Functions ##
-async def get_bank_data():
-        with open("mainbank.json", "r") as f:
-            users = json.load(f)
-        return users
-
-async def open_account(user):
-    users = await get_bank_data()
-
-    if str(user.id) in users:
-            return False
-    else:
-        users[str(user.id)] = {}
-        users[str(user.id)]["bank"] = 100
-
-    with open("mainbank.json", "w") as f:
-        json.dump(users, f, indent=4)
-    return True
-    ## Helper Functions / ##
-
-    ## / Bank Commands ##
-@client.command(name="balance", help="Checks your account balance")
-async def balance(ctx):
-    await open_account(ctx.author)
-
-    user = ctx.author
-    users = await get_bank_data()
-
-    bank_amt = users[str(user.id)]["bank"]
-
-    em = discord.Embed(
-        title=f"{ctx.author.name}'s Account",
-        description= f"{ctx.guild.name}'s Bank",
-        color=discord.Color.red())
-    em.add_field(name="Balance", value=f'${bank_amt}')
-    await ctx.send(embed=em)
-    ## Bank Commands / ##
-
-    ## / Shop Commands ##
-@client.command(name='deletechannel', help='Deletes a channel')
-async def deletechannel(ctx, channel_name):
-    existing_channel = discord.utils.get(guild.channels, name=channel_name)
-    if existing_channel is not None:
-        await existing_channel.delete()
-    else:
-        await ctx.send(f'No channel named, "{channel_name}", was found.')
-
+## Economy Commands ##
 shop_role = 25000
 shop_voice_channel = 10000
+
 @client.command(name="shop", help="View the shop list")
 async def shop(ctx):
     user = ctx.author
     server = ctx.guild.name
 
     em = discord.Embed(title=f"{server}'s Shop", color=discord.Color.blue())
-    em.add_field(name="N Word Pass", value=f"${shop_role}\n*.buy pass*",)
+    em.add_field(name="High Roller", value=f"${shop_role}\n*.buy pass*", )
     em.add_field(name="Personal Voice Channel", value=f"${shop_voice_channel}\n*.buy voicechannel*")
     await ctx.send(embed=em)
+
 
 @client.command(name="buy", help="Used to buy an item from .shop")
 async def buy(ctx, item):
@@ -272,7 +283,7 @@ async def buy(ctx, item):
 
     if item == "pass" and bank_amt >= role_cost:
         new_balance = bank_amt - role_cost
-        role = discord.utils.get(ctx.guild.roles, name="N-Word Pass")
+        role = discord.utils.get(ctx.guild.roles, name="High Roller")
         if role in ctx.author.roles:
             pass_refund = bank_amt + role_cost
             # Updates user balance
@@ -291,7 +302,7 @@ async def buy(ctx, item):
             data[str(user.id)]["bank"] = new_balance
             with open('mainbank.json', 'w') as y:
                 json.dump(data, y, indent=4)
-            await ctx.send(f'You have successfully bought the **N-Word Pass**. Your new balance is ${new_balance}')
+            await ctx.send(f'You have successfully bought the **{role}**. Your new balance is ${new_balance}')
     elif item == "voicechannel" and bank_amt >= voice_channel_cost:
         guild = ctx.message.guild
         channel_name = f"{user.name}'s Office"
@@ -317,71 +328,13 @@ async def buy(ctx, item):
                     json.dump(data, y, indent=4)
                 await existing_channel.delete()
                 await ctx.send(f"Your previous channel named **{user.name}'s Office** has been deleted. You have been refunded **${voice_channel_cost}**. Your new balance is **${newer_balance}**")
-            #else:
-                #await ctx.send(f'No channel named, "{channel_name}", was found.')
+                # else:
+                # await ctx.send(f'No channel named, "{channel_name}", was found.')
     else:
         await ctx.send("You do not have enough money for this purchase")
+## Economy Commands ##
 
-    ## Shop Commands / ##
-
-    ## / Gambling System ##
-
-
-
-        # / Helper Functions #
-async def bet_win(user, bet_amt):
-    users = await get_bank_data()
-    bank_amt = users[str(user.id)]["bank"]
-    bet_double = int(bet_amt) * 2
-    winnings = bank_amt + bet_double
-
-    with open('mainbank.json', 'r') as f:
-        data = json.load(f)
-    data[str(user.id)]["bank"] = winnings
-    with open('mainbank.json', 'w') as y:
-        json.dump(data, y, indent=4)
-    return True
-
-async def bet_lose(user, bet_amt):
-    users = await get_bank_data()
-    bank_amt = users[str(user.id)]["bank"]
-    winnings = bank_amt - int(bet_amt)
-
-    with open('mainbank.json', 'r') as f:
-        data = json.load(f)
-    data[str(user.id)]["bank"] = winnings
-    with open('mainbank.json', 'w') as y:
-        json.dump(data, y, indent=4)
-    return True
-        # Helper Functions / #
-    ## Gambling System / ##
-
-    ## / Stock System ##
-async def get_stock_json():
-    with open("stocks.json", "r") as f:
-        stocks = json.load(f)
-    return stocks
-
-async def get_price(symbol):
-    stocks = await get_stock_json()
-    stock_link = stocks[symbol]["link"]
-
-    response = requests.get(stock_link)
-    soup = BeautifulSoup(response.text, 'lxml')
-    price = soup.find_all('div', {'class': 'My(6px) Pos(r) smartphone_Mt(6px)'})[0].find('span').text
-    #print(price)
-    return price
-
-async def get_name(symbol):
-    stocks = await get_stock_json()
-    stock_name = stocks[symbol]["name"]
-    return stock_name
-
-async def get_logo(symbol):
-    stocks = await get_stock_json()
-    stock_logo = stocks[symbol]["logo"]
-    return stock_logo
-
+## Stock Commands ##
 @client.command(name='price', help='Displays the current market price: .price (market symbol)')
 async def price(ctx, symbol):
     price = await get_price(symbol)
@@ -404,7 +357,8 @@ async def stocklist(ctx):
     em = discord.Embed(title="Stock List", description="Stocks currently compatible to look up", color=discord.Color.dark_magenta())
     em.add_field(name=stock_list, value="symbols")
     await ctx.send(embed=em)
-    ## Stock System / ##
+## Stock Commands
+
 ### Tasks ###
 
 
