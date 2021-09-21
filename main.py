@@ -14,7 +14,7 @@ cody_path = ""
 os.chdir(noah_path)
 
 client = commands.Bot(command_prefix = '.')
-token = 'NzU1NDQ5NjQ0NzIwMzI0NjQw.X2DdTg.ilG6fU6a_TU1jmlsmFbfX5N-fBg'
+token = '{INSERT BOT TOKEN HERE}'
 
 ## Cog Commands ##
 @client.command()
